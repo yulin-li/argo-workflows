@@ -4,7 +4,6 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"os"
 	"path"
 	"path/filepath"
 	"strconv"
@@ -326,8 +325,8 @@ func TestTmplLevelExecutorServiceAccountName(t *testing.T) {
 	verifyServiceAccountTokenVolumeMount(t, waitCtr, "exec-sa-token", "/var/run/secrets/kubernetes.io/serviceaccount")
 }
 
-// TestTmplLevelExecutorServiceAccountName verifies the ability to carry forward template level AutomountServiceAccountToken to Podspec.
-func TestTmplLevelExecutorSecurityContext(t *testing.T) {
+// TestCtrlLevelExecutorSecurityContext verifies the ability to carry forward Controller level SecurityContext to Podspec.
+func TestCtrlLevelExecutorSecurityContext(t *testing.T) {
 	var user int64 = 1000
 	ctx := context.Background()
 	woc := newWoc()
@@ -1397,7 +1396,7 @@ func TestPodSpecPatchPodName(t *testing.T) {
 		{"v2", "hello-world-whalesay-3731220306", helloWorldStepWfWithPatch},
 	}
 	for _, tt := range tests {
-		os.Setenv("POD_NAMES", tt.podNameVersion)
+		t.Setenv("POD_NAMES", tt.podNameVersion)
 		ctx := context.Background()
 		wf := wfv1.MustUnmarshalWorkflow(tt.workflowYaml)
 		woc := newWoc(*wf)
@@ -1488,6 +1487,26 @@ func TestMainContainerCustomization(t *testing.T) {
 		assert.Equal(t, "1", pod.Spec.Containers[1].Resources.Limits.Cpu().AsDec().String())
 		assert.Equal(t, "128974848", pod.Spec.Containers[1].Resources.Limits.Memory().AsDec().String())
 	})
+}
+
+func TestExecutorContainerCustomization(t *testing.T) {
+	woc := newWoc()
+	woc.controller.Config.Executor = &apiv1.Container{
+		Args: []string{"foo"},
+		Resources: apiv1.ResourceRequirements{
+			Limits: apiv1.ResourceList{
+				apiv1.ResourceCPU:    resource.MustParse("0.900"),
+				apiv1.ResourceMemory: resource.MustParse("512Mi"),
+			},
+		},
+	}
+
+	pod, err := woc.createWorkflowPod(context.Background(), "", nil, &wfv1.Template{}, &createWorkflowPodOpts{})
+	assert.NoError(t, err)
+	waitCtr := pod.Spec.Containers[0]
+	assert.Equal(t, []string{"foo"}, waitCtr.Args)
+	assert.Equal(t, "0.900", waitCtr.Resources.Limits.Cpu().AsDec().String())
+	assert.Equal(t, "536870912", waitCtr.Resources.Limits.Memory().AsDec().String())
 }
 
 var helloWindowsWf = `
@@ -1787,6 +1806,42 @@ func TestPodExists(t *testing.T) {
 	assert.NotNil(t, existingPod)
 	assert.True(t, doesExist)
 	assert.EqualValues(t, pod, existingPod)
+}
+
+func TestPodFinalizerExits(t *testing.T) {
+	t.Setenv("ARGO_POD_STATUS_CAPTURE_FINALIZER", "true")
+	cancel, controller := newController()
+	defer cancel()
+
+	wf := wfv1.MustUnmarshalWorkflow(helloWorldWf)
+	ctx := context.Background()
+	woc := newWorkflowOperationCtx(wf, controller)
+	err := woc.setExecWorkflow(ctx)
+	assert.NoError(t, err)
+	mainCtr := woc.execWf.Spec.Templates[0].Container
+	pod, err := woc.createWorkflowPod(ctx, wf.Name, []apiv1.Container{*mainCtr}, &wf.Spec.Templates[0], &createWorkflowPodOpts{})
+	assert.NoError(t, err)
+	assert.NotNil(t, pod)
+
+	assert.Equal(t, []string{common.FinalizerPodStatus}, pod.GetFinalizers())
+}
+
+func TestPodFinalizerDoesNotExist(t *testing.T) {
+	t.Setenv("ARGO_POD_STATUS_CAPTURE_FINALIZER", "false")
+	cancel, controller := newController()
+	defer cancel()
+
+	wf := wfv1.MustUnmarshalWorkflow(helloWorldWf)
+	ctx := context.Background()
+	woc := newWorkflowOperationCtx(wf, controller)
+	err := woc.setExecWorkflow(ctx)
+	assert.NoError(t, err)
+	mainCtr := woc.execWf.Spec.Templates[0].Container
+	pod, err := woc.createWorkflowPod(ctx, wf.Name, []apiv1.Container{*mainCtr}, &wf.Spec.Templates[0], &createWorkflowPodOpts{})
+	assert.NoError(t, err)
+	assert.NotNil(t, pod)
+
+	assert.Equal(t, []string(nil), pod.GetFinalizers())
 }
 
 func TestProgressEnvVars(t *testing.T) {

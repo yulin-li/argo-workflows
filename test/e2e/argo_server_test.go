@@ -312,7 +312,7 @@ metadata:
 			func(t *testing.T, e []corev1.Event) {
 				assert.Equal(t, "argo", e[0].InvolvedObject.Namespace)
 				assert.Equal(t, "WorkflowEventBindingError", e[0].Reason)
-				assert.Equal(t, "failed to dispatch event: failed to evaluate workflow template expression: unable to evaluate expression '': unexpected token EOF (1:1)", e[0].Message)
+				assert.Equal(t, "failed to dispatch event: failed to evaluate workflow template expression: unexpected token EOF (1:1)", e[0].Message)
 			},
 		)
 }
@@ -1075,12 +1075,20 @@ func (s *ArgoServerSuite) TestArtifactServerArchivedStoppedWorkflow() {
 			nodeID = status.Nodes.FindByDisplayName("create-artifact").ID
 		})
 
-	s.Run("GetArtifactByNodeID", func() {
-		s.e().GET("/artifact-files/argo/archived-workflows/{uid}/{nodeID}/outputs/artifact-creator", uid, nodeID).
+	s.Run("GetLocalArtifactByNodeID", func() {
+		s.e().GET("/artifact-files/argo/archived-workflows/{uid}/{nodeID}/outputs/local-artifact", uid, nodeID).
 			Expect().
 			Status(200).
 			Body().
 			Contains("testing")
+	})
+
+	s.Run("GetGlobalArtifactByNodeID", func() {
+		s.e().GET("/artifact-files/argo/archived-workflows/{uid}/{nodeID}/outputs/global-artifact", uid, nodeID).
+			Expect().
+			Status(200).
+			Body().
+			Contains("testing global")
 	})
 }
 
@@ -1530,6 +1538,38 @@ spec:
 			Equal(1)
 	})
 
+}
+
+// A test can simply reproduce the problem mentioned in the link https://github.com/argoproj/argo-workflows/pull/12574
+// First, add the code to func "taskResultReconciliation".You can adjust this time to be larger for better reproduction.
+//
+//	if !woc.checkTaskResultsInProgress() {
+//		time.Sleep(time.Second * 2)
+//	}
+//
+// Second, run the test.
+// Finally, you will get a workflow in Running status but its labelCompleted is true.
+func (s *ArgoServerSuite) TestRetryStoppedButIncompleteWorkflow() {
+	var workflowName string
+	s.Given().
+		Workflow(`@testdata/retry-on-stopped.yaml`).
+		When().
+		SubmitWorkflow().
+		WaitForWorkflow(fixtures.ToBeFailed).
+		Then().
+		ExpectWorkflow(func(t *testing.T, metadata *metav1.ObjectMeta, status *wfv1.WorkflowStatus) {
+			workflowName = metadata.Name
+		})
+
+	time.Sleep(1 * time.Second)
+	s.Run("Retry", func() {
+		s.e().PUT("/api/v1/workflows/argo/{workflowName}/retry", workflowName).
+			Expect().
+			Status(200).
+			JSON().
+			Path("$.metadata.name").
+			NotNull()
+	})
 }
 
 func (s *ArgoServerSuite) TestWorkflowTemplateService() {

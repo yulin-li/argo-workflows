@@ -4256,7 +4256,7 @@
           "type": "string"
         },
         "ports": {
-          "description": "List of ports to expose from the container. Exposing a port here gives the system additional information about the network connections a container uses, but is primarily informational. Not specifying a port here DOES NOT prevent that port from being exposed. Any port which is listening on the default \"0.0.0.0\" address inside a container will be accessible from the network. Cannot be updated.",
+          "description": "List of ports to expose from the container. Not specifying a port here DOES NOT prevent that port from being exposed. Any port which is listening on the default \"0.0.0.0\" address inside a container will be accessible from the network. Modifying this array with strategic merge patch may corrupt the data. For more information See https://github.com/kubernetes/kubernetes/issues/108255. Cannot be updated.",
           "items": {
             "$ref": "#/definitions/io.k8s.api.core.v1.ContainerPort"
           },
@@ -4514,6 +4514,13 @@
           "description": "Schedule is a schedule to run the Workflow in Cron format",
           "type": "string"
         },
+        "schedules": {
+          "description": "Schedules is a list of schedules to run the Workflow in Cron format",
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        },
         "startingDeadlineSeconds": {
           "description": "StartingDeadlineSeconds is the K8s-style deadline that will limit the time a CronWorkflow will be run after its original scheduled time if it is missed.",
           "type": "integer"
@@ -4738,7 +4745,7 @@
     "io.argoproj.workflow.v1alpha1.Event": {
       "properties": {
         "selector": {
-          "description": "Selector (https://github.com/antonmedv/expr) that we must must match the io.argoproj.workflow.v1alpha1. E.g. `payload.message == \"test\"`",
+          "description": "Selector (https://github.com/expr-lang/expr) that we must must match the io.argoproj.workflow.v1alpha1. E.g. `payload.message == \"test\"`",
           "type": "string"
         }
       },
@@ -6265,7 +6272,7 @@
           "type": "string"
         },
         "ports": {
-          "description": "List of ports to expose from the container. Exposing a port here gives the system additional information about the network connections a container uses, but is primarily informational. Not specifying a port here DOES NOT prevent that port from being exposed. Any port which is listening on the default \"0.0.0.0\" address inside a container will be accessible from the network. Cannot be updated.",
+          "description": "List of ports to expose from the container. Not specifying a port here DOES NOT prevent that port from being exposed. Any port which is listening on the default \"0.0.0.0\" address inside a container will be accessible from the network. Modifying this array with strategic merge patch may corrupt the data. For more information See https://github.com/kubernetes/kubernetes/issues/108255. Cannot be updated.",
           "items": {
             "$ref": "#/definitions/io.k8s.api.core.v1.ContainerPort"
           },
@@ -6875,7 +6882,7 @@
           "type": "string"
         },
         "ports": {
-          "description": "List of ports to expose from the container. Exposing a port here gives the system additional information about the network connections a container uses, but is primarily informational. Not specifying a port here DOES NOT prevent that port from being exposed. Any port which is listening on the default \"0.0.0.0\" address inside a container will be accessible from the network. Cannot be updated.",
+          "description": "List of ports to expose from the container. Not specifying a port here DOES NOT prevent that port from being exposed. Any port which is listening on the default \"0.0.0.0\" address inside a container will be accessible from the network. Modifying this array with strategic merge patch may corrupt the data. For more information See https://github.com/kubernetes/kubernetes/issues/108255. Cannot be updated.",
           "items": {
             "$ref": "#/definitions/io.k8s.api.core.v1.ContainerPort"
           },
@@ -6964,7 +6971,7 @@
           "type": "string"
         },
         "event": {
-          "description": "Selector (https://github.com/antonmedv/expr) that is evaluated against the event to get the value of the parameter. E.g. `payload.message`",
+          "description": "Selector (https://github.com/expr-lang/expr) that is evaluated against the event to get the value of the parameter. E.g. `payload.message`",
           "type": "string"
         },
         "expression": {
@@ -7382,7 +7389,7 @@
           "description": "PodDNSConfig defines the DNS parameters of a pod in addition to those generated from DNSPolicy."
         },
         "dnsPolicy": {
-          "description": "Set DNS policy for the pod. Defaults to \"ClusterFirst\". Valid values are 'ClusterFirstWithHostNet', 'ClusterFirst', 'Default' or 'None'. DNS parameters given in DNSConfig will be merged with the policy selected with DNSPolicy. To have DNS options set along with hostNetwork, you have to specify DNS policy explicitly to 'ClusterFirstWithHostNet'.",
+          "description": "Set DNS policy for workflow pods. Defaults to \"ClusterFirst\". Valid values are 'ClusterFirstWithHostNet', 'ClusterFirst', 'Default' or 'None'. DNS parameters given in DNSConfig will be merged with the policy selected with DNSPolicy. To have DNS options set along with hostNetwork, you have to specify DNS policy explicitly to 'ClusterFirstWithHostNet'.",
           "type": "string"
         },
         "entrypoint": {
@@ -7648,7 +7655,7 @@
           "additionalProperties": {
             "type": "boolean"
           },
-          "description": "TaskResultsCompletionStatus tracks task result completion status (mapped by pod name). Used to prevent premature archiving and garbage collection.",
+          "description": "TaskResultsCompletionStatus tracks task result completion status (mapped by node ID). Used to prevent premature archiving and garbage collection.",
           "type": "object"
         }
       },

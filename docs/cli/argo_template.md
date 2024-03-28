@@ -15,7 +15,7 @@ argo template [flags]
 ### Options inherited from parent commands
 
 ```
-      --argo-base-href string          An path to use with HTTP client (e.g. due to BASE_HREF). Defaults to the ARGO_BASE_HREF environment variable.
+      --argo-base-href string          Path to use with HTTP client due to BASE_HREF. Defaults to the ARGO_BASE_HREF environment variable.
       --argo-http1                     If true, use the HTTP client. Defaults to the ARGO_HTTP1 environment variable.
   -s, --argo-server host:port          API server host:port. e.g. localhost:2746. Defaults to the ARGO_SERVER environment variable.
       --as string                      Username to impersonate for the operation
@@ -54,4 +54,5 @@ argo template [flags]
 * [argo template get](argo_template_get.md)	 - display details about a workflow template
 * [argo template lint](argo_template_lint.md)	 - validate a file or directory of workflow template manifests
 * [argo template list](argo_template_list.md)	 - list workflow templates
+* [argo template update](argo_template_update.md)	 - update a workflow template
 

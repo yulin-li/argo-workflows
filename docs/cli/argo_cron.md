@@ -19,7 +19,7 @@ argo cron [flags]
 ### Options inherited from parent commands
 
 ```
-      --argo-base-href string          An path to use with HTTP client (e.g. due to BASE_HREF). Defaults to the ARGO_BASE_HREF environment variable.
+      --argo-base-href string          Path to use with HTTP client due to BASE_HREF. Defaults to the ARGO_BASE_HREF environment variable.
       --argo-http1                     If true, use the HTTP client. Defaults to the ARGO_HTTP1 environment variable.
   -s, --argo-server host:port          API server host:port. e.g. localhost:2746. Defaults to the ARGO_SERVER environment variable.
       --as string                      Username to impersonate for the operation
@@ -60,4 +60,5 @@ argo cron [flags]
 * [argo cron list](argo_cron_list.md)	 - list cron workflows
 * [argo cron resume](argo_cron_resume.md)	 - resume zero or more cron workflows
 * [argo cron suspend](argo_cron_suspend.md)	 - suspend zero or more cron workflows
+* [argo cron update](argo_cron_update.md)	 - update a cron workflow
 
